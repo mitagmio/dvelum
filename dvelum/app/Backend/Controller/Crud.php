@@ -43,6 +43,7 @@ abstract class Backend_Controller_Crud extends Backend_Controller
      * List of ORM object link fields displayed with related values in the main list (listAction)
      * (dictionary, object link, object list) key - result field, value - object field
      * object field will be used as result field for numeric keys
+     * Requires primary key in result set
      * @var array
      */
     protected $_listLinks = [];
@@ -65,18 +66,34 @@ abstract class Backend_Controller_Crud extends Backend_Controller
     }
 
     /**
-     * Get list of items. Returns JSON  reply with
-     * ORM object field data;
+     * Get list of items. Returns JSON reply with
+     * ORM object field data or return array with data and count;
      * Filtering, pagination and search are available
      * Sends JSON reply in the result
-     * and closes the application.
+     * and closes the application (by default).
+     * @throws Exception
+     * @return void
      */
     public function listAction()
     {
-        $pager = Request::post('pager' , 'array' , array());
-        $filter = Request::post('filter' , 'array' , array());
-        $query = Request::post('search' , 'string' , false);
+        $result = $this->_getList();
+        if(empty($result)){
+            Response::jsonSuccess([]);
+        }else{
+            Response::jsonArray($result);
+        }
+    }
 
+    /**
+     * Prepare data for listAction
+     * @return array
+     * @throws Exception
+     */
+    protected function _getList()
+    {
+        $pager = Request::post('pager' , 'array' , []);
+        $filter = Request::post('filter' , 'array' , []);
+        $query = Request::post('search' , 'string' , false);
         $filter = array_merge($filter , Request::extFilters());
 
         $dataModel = Model::factory($this->_objectName);
@@ -84,14 +101,16 @@ abstract class Backend_Controller_Crud extends Backend_Controller
         $data = $dataModel->getListVc($pager , $filter , $query , $this->_listFields);
 
         if(empty($data))
-            Response::jsonSuccess(array() , array('count' => 0 ));
+            return [];
 
         if(!empty($this->_listLinks)){
             $objectConfig = Db_Object_Config::getInstance($this->_objectName);
+            if(!in_array($objectConfig->getPrimaryKey(),$this->_listFields,true)){
+                throw new Exception('listLinks requires primary key for object '.$objectConfig->getName());
+            }
             $this->addLinkedInfo($objectConfig, $this->_listLinks, $data, $objectConfig->getPrimaryKey());
         }
-
-        Response::jsonSuccess($data , array('count' => $dataModel->getCount($filter , $query)));
+        return ['data' =>$data , 'count'=> $dataModel->getCount($filter , $query)];
     }
 
     /**
@@ -146,7 +165,6 @@ abstract class Backend_Controller_Crud extends Backend_Controller
     protected function _collectLinksData($fieldName, Db_Object $object , $targetObjectName)
     {
         $result = [];
-        $srcObjectConfig = $object->getConfig();
 
         $data = $object->get($fieldName);
 
@@ -466,8 +484,6 @@ abstract class Backend_Controller_Crud extends Backend_Controller
                 $list = [];
                 $rowObject = $rowObjects[$row[$pKey]];
                 $value = $rowObject->get($field);
-
-                $row[$field] = '';
 
                 if(!empty($value))
                 {

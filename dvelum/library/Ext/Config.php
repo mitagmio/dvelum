@@ -233,17 +233,18 @@ class Ext_Config
 	public function asStringList()
 	{
 		$properties = $this->_properties->getList();
+		$result = [];
+
 		$xtype = $this->_properties->getXtype();
 		$ftype = $this->_properties->getFtype();
-		$result = array();
-			
-		if(strlen($xtype))
-			$result[] = 'xtype:"'.$this->_properties->getXtype().'"'; 
-		
+
+        if(strlen($xtype))
+            $result[] = 'xtype:"'.$this->_properties->getXtype().'"';
+
+
 		if(strlen($ftype))
 			$result[] = 'ftype:"'.$this->_properties->getFtype().'"'; 
-		
-		
+
 		if(empty($properties))
 			return array();
 			

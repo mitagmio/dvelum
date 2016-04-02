@@ -111,6 +111,7 @@
           'config' => 
           array (
             'dataIndex' => 'group_title',
+            'sortable' => false,
             'text' => '[js:] appLang.GROUP',
             'width' => 158,
           ),
@@ -168,7 +169,7 @@
             'dataIndex' => 'admin',
             'renderer' => 'Ext_Component_Renderer_System_Checkbox',
             'text' => '[js:] appLang.ADMIN',
-            'width' => 86,
+            'width' => 99,
           ),
         ),
       ),

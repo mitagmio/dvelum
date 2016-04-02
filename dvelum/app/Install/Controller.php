@@ -122,10 +122,23 @@ class Install_Controller {
         return $data;
     }
 
-    protected function _checkExtention($extention, $required, $msg = false){
-        $data = array();
-        $data['title'] = $this->localization->get('LIBRARY_CHECK') . ' ' . $extention;
-        if (in_array($extention, $this->phpExt, true)) {
+    protected function _checkExtension($extension, $required, $msg = false)
+    {
+        if(!is_array($extension)){
+            $extension = [$extension];
+        }
+
+        $data['title'] = $this->localization->get('LIBRARY_CHECK') . ' ' . implode(' / ',$extension);
+        $exists = false;
+
+        foreach($extension as $item)
+        {
+            if(in_array($item, $this->phpExt, true)){
+                $exists = true;
+            }
+        }
+
+        if ($exists) {
             $data['success'] = true;
         } else {
             $data['success'] = !$required;
@@ -148,38 +161,38 @@ class Install_Controller {
         } else
             $data['items'][0]['success'] = true;
 
-        $extentions = array(
-            array(
-                'name'=>'memcache',
-                'accessType'=>'allowed',
-                'msg'=>$this->localization->get('PERFORMANCE_WARNING')
-            ),
-            array(
+        $extensions = [
+            [
                 'name'=>'mysqli',
                 'accessType'=>'required',
                 'msg'=>false
-            ),
-            array(
+            ],
+            [
+                'name'=>['memcache','memcached'],
+                'accessType'=>'allowed',
+                'msg'=>$this->localization->get('PERFORMANCE_WARNING')
+            ],
+            [
                 'name'=>'gd',
                 'accessType'=>'required',
                 'msg'=>false
-            ),
-            array(
+            ],
+            [
                 'name'=>'mbstring',
                 'accessType'=>'required',
                 'msg'=>false
-            ),
-            array(
+            ],
+            [
                 'name' => 'mcrypt',
                 'accessType'=>'allowed',
                 'msg'=>$this->localization->get('WARNING')
-            ),
-            array(
+            ],
+            [
                 'name'=>'json',
                 'accessType'=>'required',
                 'msg'=>false
-            )
-        );
+            ]
+        ];
 
         $writablePaths = array(
             array(
@@ -217,13 +230,13 @@ class Install_Controller {
 
         );
 
-        foreach ($extentions as $v){
+        foreach ($extensions as $v){
             switch ($v['accessType']){
                 case 'required':
-                    $data['items'][] = $this->_checkExtention($v['name'], true, $v['msg']);
+                    $data['items'][] = $this->_checkExtension($v['name'], true, $v['msg']);
                     break;
                 case 'allowed':
-                    $data['items'][] = $this->_checkExtention($v['name'], false, $v['msg']);
+                    $data['items'][] = $this->_checkExtension($v['name'], false, $v['msg']);
                     break;
             }
         }
@@ -595,37 +608,6 @@ class Install_Controller {
                 'in_site_map'=>false,
                 'default_blocks'=>false
             ));
-            if(!$page->save(true, false))
-                return false;
-
-            //API Page
-            $page = new Db_Object('Page');
-            $page->setValues(array(
-                'code'=>'api',
-                'is_fixed'=>1,
-                'html_title'=>'API [System]',
-                'menu_title'=>'API',
-                'page_title'=>'API [System]',
-                'meta_keywords'=>'',
-                'meta_description'=>'',
-                'parent_id'=>null,
-                'text' =>'',
-                'func_code'=>'api',
-                'order_no' => 3,
-                'show_blocks'=>false,
-                'published'=>true,
-                'published_version'=>0,
-                'editor_id'=>$userId,
-                'date_created'=>date('Y-m-d H:i:s'),
-                'date_updated'=>date('Y-m-d H:i:s'),
-                'author_id'=>$userId,
-                'blocks'=>'',
-                'theme'=>'default',
-                'date_published'=>date('Y-m-d H:i:s'),
-                'in_site_map'=>false,
-                'default_blocks'=>false
-            ));
-
             if(!$page->save(true, false))
                 return false;
 
